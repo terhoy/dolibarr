@@ -8,6 +8,7 @@
  * Copyright (C) 2014       Raphaël Doursenaud      <rdoursenaud@gpcsolutions.fr>
  * Copyright (C) 2018       Josep Lluís Amador      <joseplluis@lliuretic.cat>
  * Copyright (C) 2019-2024  Frédéric France         <frederic.france@free.fr>
+ * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +61,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 	public $editor_url;
 
 	/**
-	 * @var string Family
+	 * @var string 	Family
 	 * @see $familyinfo
 	 *
 	 * Native values: 'crm', 'financial', 'hr', 'projects', 'products', 'ecm', 'technic', 'other'.
@@ -140,7 +141,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 	public $menu = array();
 
 	/**
-	 * @var array{triggers:int,login:int,substitutions:int,menus:int,theme:int,tpl:int,barcode:int,models:int,css:string,js:string,hooks:string[]} Module parts
+	 * @var array{triggers?:int<0,1>,login?:int<0,1>,substitutions?:int<0,1>,menus?:int<0,1>,theme?:int<0,1>,tpl?:int<0,1>,barcode?:int<0,1>,models?:int<0,1>,printing?:int<0,1>,css?:string[],js?:string[],hooks?:array{data?:string[],entity?:string},moduleforexternal?:int<0,1>,websitetemplates?:int<0,1>,contactelement?:int<0,1>} Module parts
 	 *  array(
 	 *      // Set this to 1 if module has its own trigger directory (/mymodule/core/triggers)
 	 *      'triggers' => 0,
@@ -247,7 +248,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 	public $export_code;
 
 	/**
-	 * @var string Module export label
+	 * @var string[] Module export label
 	 */
 	public $export_label;
 
@@ -279,7 +280,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 	public $import_code;
 
 	/**
-	 * @var string Module import label
+	 * @var string[] Module import label
 	 */
 	public $import_label;
 
@@ -452,7 +453,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 			$err += $this->insert_tabs();
 		}
 
-		// Insert activation of module's parts
+		// Insert activation of module's parts. Copy website templates into doctemplates.
 		if (!$err) {
 			$err += $this->insert_module_parts();
 		}
@@ -499,7 +500,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 					$ignoreerror = $val['ignoreerror'];
 				}
 				// Add current entity id
-				$sql = str_replace('__ENTITY__', $conf->entity, $sql);
+				$sql = str_replace('__ENTITY__', (string) $conf->entity, $sql);
 
 				dol_syslog(get_class($this)."::_init ignoreerror=".$ignoreerror, LOG_DEBUG);
 				$result = $this->db->query($sql, $ignoreerror);
@@ -695,7 +696,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 		$pathoffile = $this->getDescLongReadmeFound();
 
 		if ($pathoffile) {     // Mostly for external modules
-			$content = file_get_contents($pathoffile);
+			$content = file_get_contents($pathoffile, false, null, 0, 1024 * 1024);	// Max size loaded 1Mb
 
 			if ((float) DOL_VERSION >= 6.0) {
 				@include_once DOL_DOCUMENT_ROOT.'/core/lib/parsemd.lib.php';
@@ -805,6 +806,8 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 			} else {
 				$content = nl2br($content);
 			}
+		} else {
+			$content = '';
 		}
 
 		return $content;
@@ -1123,7 +1126,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 	 *
 	 * @param  	string 	$reldir 			Relative directory where to scan files. Example: '/install/mysql/' or '/module/sql/'
 	 * @param	string	$onlywithsuffix		Only with the defined suffix
-	 * @return 	int             			Return integer <=0 if KO, >0 if OK
+	 * @return 	int<0,1>             			Return integer <=0 if KO, >0 if OK
 	 */
 	protected function _load_tables($reldir, $onlywithsuffix = '')
 	{
@@ -1132,6 +1135,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 
 		$error = 0;
 		$dirfound = 0;
+		$ok = 1;
 
 		if (empty($reldir)) {
 			return 1;
@@ -1139,9 +1143,8 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 
 		include_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
 
-		$ok = 1;
 		foreach ($conf->file->dol_document_root as $dirroot) {
-			if ($ok) {
+			if ($ok == 1) {
 				$dirsql = $dirroot.$reldir;
 				$ok = 0;
 
@@ -1292,7 +1295,7 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 		}
 
 		if (!$dirfound) {
-			dol_syslog("A module ask to load sql files into ".$reldir." but this directory was not found.", LOG_WARNING);
+			dol_syslog("A module wants to load sql files from ".$reldir." but this directory was not found.", LOG_WARNING);
 		}
 		return $ok;
 	}
@@ -2308,6 +2311,15 @@ class DolibarrModules // Can not be abstract, because we need to instantiate it 
 							$this->error = ($errormsg ? $errormsg : $langs->trans('ErrorFailToCreateZip', $dest));
 							$this->errors[] = ($errormsg ? $errormsg : $langs->trans('ErrorFailToCreateZip', $dest));
 						}
+					}
+
+					// Copy also the preview website_xxx.jpg file
+					$docs = dol_dir_list($srcroot, 'files', 0, 'website_.*\.jpg$');
+					foreach ($docs as $cursorfile) {
+						$src = $srcroot.'/'.$cursorfile['name'];
+						$dest = DOL_DATA_ROOT.'/doctemplates/websites/'.$cursorfile['name'];
+
+						dol_copy($src, $dest);
 					}
 				}
 

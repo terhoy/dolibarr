@@ -612,7 +612,7 @@ if ($id > 0 || $ref) {
 
 		dol_htmloutput_events();
 
-		$linkback = '<a href="'.DOL_URL_ROOT.'/product/list.php?restore_lastsearch_values=1">'.$langs->trans("BackToList").'</a>';
+		$linkback = '<a href="'.DOL_URL_ROOT.'/product/list.php?restore_lastsearch_values=1&type='.$object->type.'">'.$langs->trans("BackToList").'</a>';
 
 		$shownav = 1;
 		if ($user->socid && !in_array('stock', explode(',', getDolGlobalString('MAIN_MODULES_FOR_EXTERNAL')))) {
@@ -796,7 +796,7 @@ if ($id > 0 || $ref) {
 			}
 
 			// Number of product from sales order already sent (partial shipping)
-			if (isModEnabled("delivery_note")) {
+			if (isModEnabled("shipping")) {
 				require_once DOL_DOCUMENT_ROOT.'/expedition/class/expedition.class.php';
 				$filterShipmentStatus = '';
 				if (getDolGlobalString('STOCK_CALCULATE_ON_SHIPMENT')) {

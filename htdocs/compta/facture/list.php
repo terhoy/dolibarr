@@ -16,6 +16,7 @@
  * Copyright (C) 2019-2021 Alexandre Spangaro    <aspangaro@open-dsi.fr>
  * Copyright (C) 2023	   Nick Fragoulis
  * Copyright (C) 2023	   Joachim Kueter		 <git-jk@bloxera.com>
+ * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -114,8 +115,8 @@ $search_state = GETPOST("search_state");
 $search_country = GETPOST("search_country", 'alpha');
 $search_customer_code = GETPOST("search_customer_code", 'alphanohtml');
 $search_type_thirdparty = GETPOSTINT("search_type_thirdparty");
-$search_user = GETPOSTINT('search_user');
-$search_sale = GETPOSTINT('search_sale');
+$search_user = GETPOST('search_user', 'intcomma');
+$search_sale = GETPOST('search_sale', 'intcomma');
 $search_date_startday = GETPOSTINT('search_date_startday');
 $search_date_startmonth = GETPOSTINT('search_date_startmonth');
 $search_date_startyear = GETPOSTINT('search_date_startyear');
@@ -143,8 +144,6 @@ $search_datelimit_end = dol_mktime(23, 59, 59, $search_datelimit_endmonth, $sear
 $search_categ_cus = GETPOSTINT("search_categ_cus");
 $search_product_category = GETPOSTINT('search_product_category');
 $search_fac_rec_source_title = GETPOST("search_fac_rec_source_title", 'alpha');
-$search_btn = GETPOST('button_search', 'alpha');
-$search_remove_btn = GETPOST('button_removefilter', 'alpha');
 
 $search_late = GETPOST('search_late');
 if ($search_late == 'late') {
@@ -273,8 +272,6 @@ foreach ($object->fields as $key => $val) {
 			$newkey = $key;
 		} elseif (array_key_exists('f.'.$key, $arrayfields)) {
 			$newkey = 'f.'.$key;
-		} elseif (array_key_exists('f.'.$key, $arrayfields)) {
-			$newkey = 'f.'.$key;
 		} elseif (array_key_exists('s.'.$key, $arrayfields)) {
 			$newkey = 's.'.$key;
 		}
@@ -294,6 +291,7 @@ include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_array_fields.tpl.php';
 
 $object->fields = dol_sort_array($object->fields, 'position');
 $arrayfields = dol_sort_array($arrayfields, 'position');
+'@phan-var-force array<string,array{label:string,checked?:int<0,1>,position?:int,help?:string}> $arrayfields';  // dol_sort_array looses type for Phan
 
 if (!$user->hasRight('societe', 'client', 'voir')) {
 	$search_sale = $user->id;
@@ -1004,7 +1002,7 @@ if ($num == 1 && getDolGlobalString('MAIN_SEARCH_DIRECT_OPEN_IF_ONLY_ONE') && $s
 
 llxHeader('', $title, $help_url);
 
-$param = '&socid='.urlencode($socid);
+$param = '&socid='.urlencode((string) ($socid));
 if (!empty($mode)) {
 	$param .= '&mode='.urlencode($mode);
 }
@@ -1018,58 +1016,58 @@ if ($search_all) {
 	$param .= '&search_all='.urlencode($search_all);
 }
 if ($search_date_startday) {
-	$param .= '&search_date_startday='.urlencode($search_date_startday);
+	$param .= '&search_date_startday='.urlencode((string) ($search_date_startday));
 }
 if ($search_date_startmonth) {
-	$param .= '&search_date_startmonth='.urlencode($search_date_startmonth);
+	$param .= '&search_date_startmonth='.urlencode((string) ($search_date_startmonth));
 }
 if ($search_date_startyear) {
-	$param .= '&search_date_startyear='.urlencode($search_date_startyear);
+	$param .= '&search_date_startyear='.urlencode((string) ($search_date_startyear));
 }
 if ($search_date_endday) {
-	$param .= '&search_date_endday='.urlencode($search_date_endday);
+	$param .= '&search_date_endday='.urlencode((string) ($search_date_endday));
 }
 if ($search_date_endmonth) {
-	$param .= '&search_date_endmonth='.urlencode($search_date_endmonth);
+	$param .= '&search_date_endmonth='.urlencode((string) ($search_date_endmonth));
 }
 if ($search_date_endyear) {
-	$param .= '&search_date_endyear='.urlencode($search_date_endyear);
+	$param .= '&search_date_endyear='.urlencode((string) ($search_date_endyear));
 }
 if ($search_date_valid_startday) {
-	$param .= '&search_date_valid_startday='.urlencode($search_date_valid_startday);
+	$param .= '&search_date_valid_startday='.urlencode((string) ($search_date_valid_startday));
 }
 if ($search_date_valid_startmonth) {
-	$param .= '&search_date_valid_startmonth='.urlencode($search_date_valid_startmonth);
+	$param .= '&search_date_valid_startmonth='.urlencode((string) ($search_date_valid_startmonth));
 }
 if ($search_date_valid_startyear) {
-	$param .= '&search_date_valid_startyear='.urlencode($search_date_valid_startyear);
+	$param .= '&search_date_valid_startyear='.urlencode((string) ($search_date_valid_startyear));
 }
 if ($search_date_valid_endday) {
-	$param .= '&search_date_valid_endday='.urlencode($search_date_valid_endday);
+	$param .= '&search_date_valid_endday='.urlencode((string) ($search_date_valid_endday));
 }
 if ($search_date_valid_endmonth) {
-	$param .= '&search_date_valid_endmonth='.urlencode($search_date_valid_endmonth);
+	$param .= '&search_date_valid_endmonth='.urlencode((string) ($search_date_valid_endmonth));
 }
 if ($search_date_valid_endyear) {
-	$param .= '&search_date_valid_endyear='.urlencode($search_date_valid_endyear);
+	$param .= '&search_date_valid_endyear='.urlencode((string) ($search_date_valid_endyear));
 }
 if ($search_datelimit_startday) {
-	$param .= '&search_datelimit_startday='.urlencode($search_datelimit_startday);
+	$param .= '&search_datelimit_startday='.urlencode((string) ($search_datelimit_startday));
 }
 if ($search_datelimit_startmonth) {
-	$param .= '&search_datelimit_startmonth='.urlencode($search_datelimit_startmonth);
+	$param .= '&search_datelimit_startmonth='.urlencode((string) ($search_datelimit_startmonth));
 }
 if ($search_datelimit_startyear) {
-	$param .= '&search_datelimit_startyear='.urlencode($search_datelimit_startyear);
+	$param .= '&search_datelimit_startyear='.urlencode((string) ($search_datelimit_startyear));
 }
 if ($search_datelimit_endday) {
-	$param .= '&search_datelimit_endday='.urlencode($search_datelimit_endday);
+	$param .= '&search_datelimit_endday='.urlencode((string) ($search_datelimit_endday));
 }
 if ($search_datelimit_endmonth) {
-	$param .= '&search_datelimit_endmonth='.urlencode($search_datelimit_endmonth);
+	$param .= '&search_datelimit_endmonth='.urlencode((string) ($search_datelimit_endmonth));
 }
 if ($search_datelimit_endyear) {
-	$param .= '&search_datelimit_endyear='.urlencode($search_datelimit_endyear);
+	$param .= '&search_datelimit_endyear='.urlencode((string) ($search_datelimit_endyear));
 }
 if ($search_ref) {
 	$param .= '&search_ref='.urlencode($search_ref);
@@ -1117,13 +1115,13 @@ if ($search_sale > 0) {
 	$param .= '&search_sale='.urlencode($search_sale);
 }
 if ($search_user > 0) {
-	$param .= '&search_user='.urlencode($search_user);
+	$param .= '&search_user='.urlencode((string) ($search_user));
 }
 if ($search_login) {
 	$param .= '&search_login='.urlencode($search_login);
 }
 if ($search_product_category > 0) {
-	$param .= '&search_product_category='.urlencode($search_product_category);
+	$param .= '&search_product_category='.urlencode((string) ($search_product_category));
 }
 if ($search_montant_ht != '') {
 	$param .= '&search_montant_ht='.urlencode($search_montant_ht);
@@ -1159,10 +1157,10 @@ if ($search_status != '') {
 	$param .= '&search_status='.urlencode($search_status);
 }
 if ($search_paymentmode > 0) {
-	$param .= '&search_paymentmode='.urlencode($search_paymentmode);
+	$param .= '&search_paymentmode='.urlencode((string) ($search_paymentmode));
 }
 if ($search_paymentterms > 0) {
-	$param .= '&search_paymentterms='.urlencode($search_paymentterms);
+	$param .= '&search_paymentterms='.urlencode((string) ($search_paymentterms));
 }
 if ($search_module_source) {
 	$param .= '&search_module_source='.urlencode($search_module_source);
@@ -1171,7 +1169,7 @@ if ($search_pos_source) {
 	$param .= '&search_pos_source='.urlencode($search_pos_source);
 }
 if ($show_files) {
-	$param .= '&show_files='.urlencode($show_files);
+	$param .= '&show_files='.urlencode((string) ($show_files));
 }
 if ($search_late) {
 	$param .= "&search_late=".urlencode($search_late);
@@ -1180,7 +1178,7 @@ if ($optioncss != '') {
 	$param .= '&optioncss='.urlencode($optioncss);
 }
 if ($search_categ_cus > 0) {
-	$param .= '&search_categ_cus='.urlencode($search_categ_cus);
+	$param .= '&search_categ_cus='.urlencode((string) ($search_categ_cus));
 }
 if (!empty($search_fac_rec_source_title)) {
 	$param .= '&search_fac_rec_source_title='.urlencode($search_fac_rec_source_title);
@@ -2614,14 +2612,14 @@ if ($num > 0) {
 			}
 			// Total margin rate
 			if (!empty($arrayfields['total_margin_rate']['checked'])) {
-				print '<td class="right nowrap">'.(($marginInfo['total_margin_rate'] == '') ? '' : price($marginInfo['total_margin_rate'], 0, null, null, null, 2).'%').'</td>';
+				print '<td class="right nowrap">'.(($marginInfo['total_margin_rate'] == '') ? '' : price($marginInfo['total_margin_rate'], 0, '', 0, 0, 2).'%').'</td>';
 				if (!$i) {
 					$totalarray['nbfield']++;
 				}
 			}
 			// Total mark rate
 			if (!empty($arrayfields['total_mark_rate']['checked'])) {
-				print '<td class="right nowrap">'.(($marginInfo['total_mark_rate'] == '') ? '' : price($marginInfo['total_mark_rate'], 0, null, null, null, 2).'%').'</td>';
+				print '<td class="right nowrap">'.(($marginInfo['total_mark_rate'] == '') ? '' : price($marginInfo['total_mark_rate'], 0, '', 0, 0, 2).'%').'</td>';
 				if (!$i) {
 					$totalarray['nbfield']++;
 					$totalarray['pos'][$totalarray['nbfield']] = 'total_mark_rate';

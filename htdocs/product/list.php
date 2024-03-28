@@ -14,6 +14,7 @@
  * Copyright (C) 2020-2021	Open-DSI                <support@open-dsi.fr>
  * Copyright (C) 2022		Charlene Benke          <charlene@patas-monkey.com>
  * Copyright (C) 2020-2023	Alexandre Spangaro      <aspangaro@easya.solutions>
+ * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -296,7 +297,7 @@ if (getDolGlobalString('PRODUIT_MULTIPRICES')) {
 		} else {
 			$labelp = $langs->transnoentitiesnoconv("SellingPrice")." ".$i;
 		}
-		$arrayfields['p.sellprice'.$i] = array('label' => $labelp, 'checked' => ($i == 1 ? 1 : 0), 'enabled' => getDolGlobalString('PRODUIT_MULTIPRICES'), 'position' => (float) ('40.'.sprintf('%03s', $i)));
+		$arrayfields['p.sellprice'.$i] = array('label' => $labelp, 'checked' => ($i == 1 ? 1 : 0), 'enabled' => getDolGlobalString('PRODUIT_MULTIPRICES'), 'position' => (float) ('40.'.sprintf('%03d', $i)));
 		$arraypricelevel[$i] = array($i);
 	}
 }
@@ -307,6 +308,7 @@ include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_array_fields.tpl.php';
 
 $object->fields = dol_sort_array($object->fields, 'position');
 $arrayfields = dol_sort_array($arrayfields, 'position');
+'@phan-var-force array<string,array{label:string,checked?:int<0,1>,position?:int,help?:string}> $arrayfields';  // dol_sort_array looses type for Phan
 
 // Security check
 if ($search_type == '0') {
@@ -496,6 +498,11 @@ if (isModEnabled('variants')) {
 if (getDolGlobalString('PRODUCT_USE_UNITS')) {
 	$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."c_units cu ON cu.rowid = p.fk_unit";
 }
+
+// Add table from hooks
+$parameters = array();
+$reshook = $hookmanager->executeHooks('printFieldListFrom', $parameters, $object, $action); // Note that $action and $object may have been modified by hook
+$sql .= $hookmanager->resPrint;
 
 $sql .= ' WHERE p.entity IN ('.getEntity('product').')';
 if ($sall) {
@@ -748,7 +755,7 @@ if ($sall) {
 	$param .= "&sall=".urlencode($sall);
 }
 if ($searchCategoryProductOperator == 1) {
-	$param .= "&search_category_product_operator=".urlencode($searchCategoryProductOperator);
+	$param .= "&search_category_product_operator=".urlencode((string) ($searchCategoryProductOperator));
 }
 foreach ($searchCategoryProductList as $searchCategoryProduct) {
 	$param .= "&search_category_product_list[]=".urlencode($searchCategoryProduct);
@@ -778,22 +785,22 @@ if ($search_tobatch) {
 	$param .= "&search_tobatch=".urlencode($search_tobatch);
 }
 if ($search_country != '') {
-	$param .= "&search_country=".urlencode($search_country);
+	$param .= "&search_country=".urlencode((string) ($search_country));
 }
 if ($search_state != '') {
-	$param .= "&search_state=".urlencode($search_state);
+	$param .= "&search_state=".urlencode((string) ($search_state));
 }
 if ($search_vatrate) {
 	$param .= "&search_vatrate=".urlencode($search_vatrate);
 }
 if ($fourn_id > 0) {
-	$param .= "&fourn_id=".urlencode($fourn_id);
+	$param .= "&fourn_id=".urlencode((string) ($fourn_id));
 }
 if ($show_childproducts) {
 	$param .= ($show_childproducts ? "&search_show_childproducts=".urlencode($show_childproducts) : "");
 }
 if ($type != '') {
-	$param .= '&type='.urlencode($type);
+	$param .= '&type='.urlencode((string) ($type));
 }
 if ($search_type != '') {
 	$param .= '&search_type='.urlencode($search_type);
@@ -867,11 +874,11 @@ if ($type === "") {
 	$params['forcenohideoftext'] = 1;
 }
 $newcardbutton .= dolGetButtonTitleSeparator();
-if ($type === "" || $type == Product::TYPE_PRODUCT) {
+if ((isModEnabled('product') && $type === "") || $type == Product::TYPE_PRODUCT) {
 	$label = 'NewProduct';
 	$newcardbutton .= dolGetButtonTitle($langs->trans($label), '', 'fa fa-plus-circle', DOL_URL_ROOT.'/product/card.php?action=create&type=0', '', $perm, $params);
 }
-if ($type === "" || $type == Product::TYPE_SERVICE) {
+if ((isModEnabled('service') && $type === "") || $type == Product::TYPE_SERVICE) {
 	$label = 'NewService';
 	$newcardbutton .= dolGetButtonTitle($langs->trans($label), '', 'fa fa-plus-circle', DOL_URL_ROOT.'/product/card.php?action=create&type=1', '', $perm, $params);
 }
@@ -1303,12 +1310,12 @@ if (!empty($arrayfields['p.duration']['checked'])) {
 }
 if (!empty($arrayfields['pac.fk_product_parent']['checked'])) {
 	print_liste_field_titre($arrayfields['pac.fk_product_parent']['label'], $_SERVER["PHP_SELF"], "pac.fk_product_parent", "", $param, '', $sortfield, $sortorder, '', empty($arrayfields['pac.fk_product_parent']['help']) ? '' : $arrayfields['pac.fk_product_parent']['help']);
+	$totalarray['nbfield']++;
 }
 if (!empty($arrayfields['p.finished']['checked'])) {
 	print_liste_field_titre($arrayfields['p.finished']['label'], $_SERVER["PHP_SELF"], "p.finished", "", $param, '', $sortfield, $sortorder, 'center ');
 	$totalarray['nbfield']++;
 }
-
 if (!empty($arrayfields['p.weight']['checked'])) {
 	print_liste_field_titre($arrayfields['p.weight']['label'], $_SERVER['PHP_SELF'], 'p.weight', '', $param, '', $sortfield, $sortorder, 'center ');
 	$totalarray['nbfield']++;
@@ -2010,6 +2017,9 @@ while ($i < $imaxinloop) {
 				}
 			}
 			print '</td>';
+			if (!$i) {
+				$totalarray['nbfield']++;
+			}
 		}
 
 		// VAT or Sell Tax Rate
@@ -2029,6 +2039,9 @@ while ($i < $imaxinloop) {
 				print '<span class="amount">'.price($product_static->pmp, 1, $langs)."</span>";
 			}
 			print '</td>';
+			if (!$i) {
+				$totalarray['nbfield']++;
+			}
 		}
 		// Cost price
 		if (!empty($arrayfields['p.cost_price']['checked'])) {
@@ -2038,6 +2051,9 @@ while ($i < $imaxinloop) {
 				print '<span class="amount">'.price($obj->cost_price).' '.$langs->trans("HT").'</span>';
 			}
 			print '</td>';
+			if (!$i) {
+				$totalarray['nbfield']++;
+			}
 		}
 
 		// Limit alert

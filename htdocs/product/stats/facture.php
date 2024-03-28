@@ -164,7 +164,7 @@ if ($id > 0 || !empty($ref)) {
 			setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
 		}
 
-		$linkback = '<a href="'.DOL_URL_ROOT.'/product/list.php?restore_lastsearch_values=1">'.$langs->trans("BackToList").'</a>';
+		$linkback = '<a href="'.DOL_URL_ROOT.'/product/list.php?restore_lastsearch_values=1&type='.$object->type.'">'.$langs->trans("BackToList").'</a>';
 
 		$shownav = 1;
 		if ($user->socid && !in_array('product', explode(',', getDolGlobalString('MAIN_MODULES_FOR_EXTERNAL')))) {
@@ -278,7 +278,7 @@ if ($id > 0 || !empty($ref)) {
 					$option .= '&search_month='.urlencode($search_month);
 				}
 				if (!empty($search_year)) {
-					$option .= '&search_year='.urlencode($search_year);
+					$option .= '&search_year='.urlencode((string) ($search_year));
 				}
 
 				// Add $param from extra fields
@@ -301,7 +301,7 @@ if ($id > 0 || !empty($ref)) {
 				print_barre_liste($langs->trans("CustomersInvoices"), $page, $_SERVER["PHP_SELF"], $option, $sortfield, $sortorder, '', $num, $totalofrecords, '', 0, '', '', $limit, 0, 0, 1);
 
 				if (!empty($page)) {
-					$option .= '&page='.urlencode($page);
+					$option .= '&page='.urlencode((string) ($page));
 				}
 
 				print '<div class="liste_titre liste_titre_bydiv centpercent">';

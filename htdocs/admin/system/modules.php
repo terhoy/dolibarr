@@ -2,6 +2,7 @@
 /* Copyright (C) 2005-2009	Laurent Destailleur		<eldy@users.sourceforge.net>
  * Copyright (C) 2007		Rodolphe Quiedeville	<rodolphe@quiedeville.org>
  * Copyright (C) 2010-2012	Regis Houssin			<regis.houssin@inodbox.com>
+ * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,6 +67,8 @@ $arrayfields = array(
 );
 
 $arrayfields = dol_sort_array($arrayfields, 'position');
+'@phan-var-force array<string,array{label:string,checked:int<0,1>,position:int}> $arrayfields';
+
 $param = '';
 $info_admin = '';
 
@@ -112,6 +115,7 @@ foreach ($modulesdir as $dir) {
 						if (class_exists($modName)) {
 							try {
 								$objMod = new $modName($db);
+								'@phan-var-force DolibarrModules $objMod';
 
 								$modules[$objMod->numero] = $objMod;
 								$modules_files[$objMod->numero] = $file;
@@ -129,6 +133,7 @@ foreach ($modulesdir as $dir) {
 		closedir($handle);
 	}
 }
+'@phan-var-force array<string,DolibarrModules> $modules';
 
 // create pre-filtered list for modules
 foreach ($modules as $key => $module) {
@@ -308,21 +313,37 @@ print '</tr>';
 
 // sort list
 if ($sortfield == "name" && $sortorder == "asc") {
-	usort($moduleList, function (stdClass $a, stdClass $b) {
-		return strcasecmp($a->name, $b->name);
-	});
+	usort(
+		$moduleList,
+		/** @return int */
+		function (stdClass $a, stdClass $b) {
+			return strcasecmp($a->name, $b->name);
+		}
+	);
 } elseif ($sortfield == "name" && $sortorder == "desc") {
-	usort($moduleList, function (stdClass $a, stdClass $b) {
-		return strcasecmp($b->name, $a->name);
-	});
+	usort(
+		$moduleList,
+		/** @return int */
+		static function (stdClass $a, stdClass $b) {
+			return strcasecmp($b->name, $a->name);
+		}
+	);
 } elseif ($sortfield == "version" && $sortorder == "asc") {
-	usort($moduleList, function (stdClass $a, stdClass $b) {
-		return strcasecmp($a->version, $b->version);
-	});
+	usort(
+		$moduleList,
+		/** @return int */
+		static function (stdClass $a, stdClass $b) {
+			return strcasecmp($a->version, $b->version);
+		}
+	);
 } elseif ($sortfield == "version" && $sortorder == "desc") {
-	usort($moduleList, function (stdClass $a, stdClass $b) {
-		return strcasecmp($b->version, $a->version);
-	});
+	usort(
+		$moduleList,
+		/** @return int */
+		static function (stdClass $a, stdClass $b) {
+			return strcasecmp($b->version, $a->version);
+		}
+	);
 } elseif ($sortfield == "id" && $sortorder == "asc") {
 	usort($moduleList, "compareIdAsc");
 } elseif ($sortfield == "id" && $sortorder == "desc") {

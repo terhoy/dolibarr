@@ -3,7 +3,7 @@
 // Protection to avoid direct call of template
 if (empty($conf) || !is_object($conf)) {
 	print "Error, template page can't be called as URL";
-	exit;
+	exit(1);
 }
 
 if (empty($extrafieldsobjectkey) && is_object($object)) {
@@ -19,6 +19,10 @@ if (!empty($extrafieldsobjectkey) && !empty($extrafields->attributes[$extrafield
 
 		foreach ($extrafields->attributes[$extrafieldsobjectkey]['label'] as $key => $val) {
 			if (!empty($arrayfields[$extrafieldsobjectprefix.$key]['checked'])) {
+				if ($extrafields->attributes[$extrafieldsobjectkey]['type'][$key] == 'separate') {
+					continue;
+				}
+
 				$cssclass = $extrafields->getAlignFlag($key, $extrafieldsobjectkey);
 
 				$tmpkey = 'options_'.$key;
@@ -71,7 +75,8 @@ if (!empty($extrafieldsobjectkey) && !empty($extrafields->attributes[$extrafield
 						$totalarray['totalizable'][$key]['total'] += $obj->$tmpkey;
 					}
 				}
-				if (!empty($val['isameasure']) && $val['isameasure'] == 1) {
+				// key 'totalizable' if in extrafields same as 'isameasure' into ->$fields
+				if (!empty($extrafields->attributes[$extrafieldsobjectkey]['totalizable'][$key]) && $extrafields->attributes[$extrafieldsobjectkey]['totalizable'][$key] == 1) {
 					if (!$i) {
 						$totalarray['pos'][$totalarray['nbfield']] = $extrafieldsobjectprefix.$tmpkey;
 					}

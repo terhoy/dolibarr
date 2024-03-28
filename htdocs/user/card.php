@@ -15,6 +15,7 @@
  * Copyright (C) 2016      Raphaël Doursenaud   <rdoursenaud@gpcsolutions.fr>
  * Copyright (C) 2018-2023 Frédéric France      <frederic.france@netlogic.fr>
  * Copyright (C) 2018      David Beniamine      <David.Beniamine@Tetras-Libre.fr>
+ * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -890,7 +891,7 @@ if ($action == 'create' || $action == 'adduserldap') {
 	}
 	print '<input type="hidden" name="entity" value="'.$conf->entity.'">';
 
-	print dol_get_fiche_head('', '', '', 0, '');
+	print dol_get_fiche_head(array(), '', '', 0, '');
 
 	dol_set_focus('#lastname');
 
@@ -1582,8 +1583,11 @@ if ($action == 'create' || $action == 'adduserldap') {
 
 			// Employee
 			print '<tr><td>'.$langs->trans("Employee").'</td><td>';
-			print '<input type="checkbox" disabled name="employee" value="1"'.($object->employee ? ' checked="checked"' : '').'>';
-			//print yn($object->employee);
+			if (getDolGlobalInt('MAIN_OPTIMIZEFORTEXTBROWSER') < 2) {
+				print '<input type="checkbox" disabled name="employee" value="1"'.($object->employee ? ' checked="checked"' : '').'>';
+			} else {
+				print yn($object->employee);
+			}
 			print '</td></tr>'."\n";
 
 			// TODO This is also available into the tab RH

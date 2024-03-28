@@ -2,6 +2,7 @@
 /* Copyright (C) 2003	   Rodolphe Quiedeville <rodolphe@quiedeville.org>
  * Copyright (C) 2003	   Jean-Louis Bergamo	<jlb@j1b.org>
  * Copyright (C) 2006-2017 Laurent Destailleur	<eldy@users.sourceforge.net>
+ * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -178,6 +179,7 @@ if (empty($reshook)) {
 			// Load barcode class for generating barcode image
 			$classname = "mod".ucfirst($generator);
 			$module = new $classname($db);
+			'@phan-var-force ModeleBarCode $module';
 			if ($generator != 'tcpdfbarcode') {
 				// May be phpbarcode
 				$template = 'standardlabel';
@@ -252,8 +254,6 @@ if (empty($reshook)) {
 					$error++;
 				}
 			}
-
-			$i++;
 
 			// Build and output PDF
 			if (!$error && $mode == 'label') {

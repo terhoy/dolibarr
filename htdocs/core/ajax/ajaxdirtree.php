@@ -1,6 +1,7 @@
 <?php
 /* Copyright (C) 2007-2018  Laurent Destailleur     <eldy@users.sourceforge.net>
  * Copyright (C) 2018       Frédéric France         <frederic.france@netlogic.fr>
+ * Copyright (C) 2024		MDW							<mdeweerd@users.noreply.github.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -95,7 +96,7 @@ if ($modulepart == 'ecm') {
 if (preg_match('/\.\./', $fullpathselecteddir) || preg_match('/[<>|]/', $fullpathselecteddir)) {
 	dol_syslog("Refused to deliver file ".$original_file);
 	// Do no show plain path in shown error message
-	dol_print_error(0, $langs->trans("ErrorFileNameInvalid", GETPOST("file")));
+	dol_print_error(null, $langs->trans("ErrorFileNameInvalid", GETPOST("file")));
 	exit;
 }
 
@@ -218,6 +219,7 @@ if (empty($conf->use_javascript_ajax) || getDolGlobalString('MAIN_ECM_DISABLE_JS
 		// We removed all expanded sections that are child of the closed section
 		$oldexpandedsectionarray = $expandedsectionarray;
 		$expandedsectionarray = array(); // Reset
+		// @phan-suppress-next-line PhanEmptyForeachBody
 		foreach ($oldexpandedsectionarray as $sectioncursor) {
 			// TODO is_in_subtree(fulltree,sectionparent,sectionchild) does nox exists. Enable or remove this...
 			//if ($sectioncursor && ! is_in_subtree($sqltree,$section,$sectioncursor)) $expandedsectionarray[]=$sectioncursor;
